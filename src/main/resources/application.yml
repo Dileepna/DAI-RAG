@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: windfarm-rag
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/windfarm}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PASSWORD:changeit123}
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+  servlet:
+    multipart:
+      max-file-size: 1GB
+      max-request-size: 1GB
+  ai:
+    model:
+      chat: ollama
+      embedding: ollama
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: when_missing
+        timeout: 15m
+      chat:
+        options:
+          model: ${OLLAMA_CHAT_MODEL:llama3.2}
+          temperature: 0.1
+      embedding:
+        options:
+          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_GRPC_PORT:6334}
+        collection-name: windfarm_measurements
+        initialize-schema: true
+  mvc:
+    problemdetails:
+      enabled: true
+
+app:
+  ingestion:
+    batch-size: 32
+    max-measurements-per-chunk: 100
+  query:
+    max-context-chars: 24000
+
+server:
+  shutdown: graceful
+  port: ${PORT:8080}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

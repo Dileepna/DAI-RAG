@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: windfarm
+      POSTGRES_USER: windfarm
+      POSTGRES_PASSWORD: windfarm
+    ports: ["5432:5432"]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U windfarm -d windfarm"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    ports: ["6333:6333", "6334:6334"]
+    volumes: [qdrant-data:/qdrant/storage]
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: [ollama-data:/root/.ollama]
+  windfarm-rag:
+    build: .
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/windfarm
+      DATABASE_USER: windfarm
+      DATABASE_PASSWORD: windfarm
+      QDRANT_HOST: qdrant
+      OLLAMA_BASE_URL: http://ollama:11434
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      qdrant: { condition: service_started }
+      ollama: { condition: service_started }
+volumes:
+  postgres-data:
+  qdrant-data:
+  ollama-data:
